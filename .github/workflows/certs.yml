@@ -1,0 +1,18 @@
+name: Compare signing certs
+on: workflow_dispatch
+jobs:
+  certs:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compare release signatures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          AS=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          AAPT=$(ls $ANDROID_HOME/build-tools/*/aapt | sort -V | tail -1)
+          for t in v1.0.3 v1.1.4 v1.2.5 v1.3.6 v1.4.7; do
+            gh release download $t -R ${{ github.repository }} -p '*arm64*' -O $t.apk || continue
+            SHA=$($AS verify --print-certs $t.apk | grep -m1 'SHA-256' | awk '{print $NF}' | cut -c1-16)
+            VC=$($AAPT dump badging $t.apk | grep -o "versionCode='[0-9]*'")
+            echo "::notice title=$t::$VC cert=$SHA"
+          done
