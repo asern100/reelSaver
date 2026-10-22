@@ -53,4 +53,25 @@
     <string name="engine_section">محرك التحميل</string>
     <string name="engine_info">النسخة: %1$s\nآخر تحديث: %2$s</string>
     <string name="never">لم يتم بعد</string>
+    <string name="quick_video">ReelSaver ⬇ فيديو</string>
+    <string name="quick_audio">ReelSaver 🎵 صوت</string>
+    <string name="ch_progress">التنزيلات الجارية</string>
+    <string name="ch_done">التنزيلات المكتملة</string>
+    <string name="bg_video_title">جارٍ تنزيل الفيديو (%1$s)</string>
+    <string name="bg_audio_title">جارٍ تنزيل الصوت (%1$s)</string>
+    <string name="bg_done_video">✅ تم تنزيل الفيديو</string>
+    <string name="bg_done_audio">✅ تم تنزيل الصوت</string>
+    <string name="bg_failed">❌ فشل التنزيل</string>
+    <string name="bg_started_video">⬇ جارٍ تنزيل الفيديو في الخلفية…</string>
+    <string name="bg_started_audio">🎵 جارٍ تنزيل الصوت في الخلفية…</string>
+    <string name="bubble_failed">تعذّر العثور على زر المشاركة هنا. افتح الريل بملء الشاشة وأعد المحاولة، أو استخدم مشاركة ← ReelSaver ⬇ فيديو.</string>
+    <string name="bubble_service_label">أزرار ReelSaver العائمة</string>
+    <string name="bubble_service_desc">يعرض زرّين عائمين (⬇ فيديو، 🎵 صوت) فوق تيك توك وإنستغرام وفيسبوك ويوتيوب. عند الضغط يفتح ReelSaver قائمة المشاركة في التطبيق، ويضغط «نسخ الرابط»، ثم ينزّل في الخلفية. لا يتصرف إلا عند ضغطك على زر، ولا يقرأ أي شيء آخر.</string>
+    <string name="bubble_section">الأزرار العائمة</string>
+    <string name="bubble_show">إظهار الأزرار العائمة فوق تيك توك / إنستغرام / فيسبوك / يوتيوب</string>
+    <string name="bubble_status_on">✅ مفعّلة. اسحب الأزرار لتغيير مكانها.</string>
+    <string name="bubble_status_off">غير مفعّلة بعد. اضغط بالأسفل ثم فعّل «أزرار ReelSaver العائمة».</string>
+    <string name="bubble_enable">تفعيل الأزرار العائمة</string>
+    <string name="bubble_restricted">إذا ظهرت رسالة «إعداد محظور»: افتح معلومات تطبيق ReelSaver ← ⋮ (أعلى الشاشة) ← «السماح بالإعدادات المحظورة»، ثم أعد المحاولة.</string>
+    <string name="app_info">فتح معلومات التطبيق</string>
 </resources>

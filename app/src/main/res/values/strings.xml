@@ -57,4 +57,25 @@
     <string name="engine_section">Download engine</string>
     <string name="engine_info">Version: %1$s\nLast update: %2$s</string>
     <string name="never">never</string>
+    <string name="quick_video">ReelSaver ⬇ Video</string>
+    <string name="quick_audio">ReelSaver 🎵 Audio</string>
+    <string name="ch_progress">Downloads in progress</string>
+    <string name="ch_done">Finished downloads</string>
+    <string name="bg_video_title">Downloading video (%1$s)</string>
+    <string name="bg_audio_title">Downloading audio (%1$s)</string>
+    <string name="bg_done_video">✅ Video downloaded</string>
+    <string name="bg_done_audio">✅ Audio downloaded</string>
+    <string name="bg_failed">❌ Download failed</string>
+    <string name="bg_started_video">⬇ Downloading video in the background…</string>
+    <string name="bg_started_audio">🎵 Downloading audio in the background…</string>
+    <string name="bubble_failed">Couldn\'t find the Share button here. Open the reel full screen and try again, or use Share → ReelSaver ⬇ Video.</string>
+    <string name="bubble_service_label">ReelSaver floating buttons</string>
+    <string name="bubble_service_desc">Shows two floating buttons (⬇ video, 🎵 audio) over TikTok, Instagram, Facebook and YouTube. When tapped, ReelSaver opens the app\'s Share menu, taps \"Copy link\" and downloads in the background. It only acts when you tap a button and reads nothing else.</string>
+    <string name="bubble_section">Floating buttons</string>
+    <string name="bubble_show">Show floating buttons over TikTok / Instagram / Facebook / YouTube</string>
+    <string name="bubble_status_on">✅ Enabled. Drag the buttons to move them.</string>
+    <string name="bubble_status_off">Not enabled yet. Tap below, then turn on \"ReelSaver floating buttons\".</string>
+    <string name="bubble_enable">Enable floating buttons</string>
+    <string name="bubble_restricted">If Android says \"Restricted setting\": open App info for ReelSaver → ⋮ (top right) → \"Allow restricted settings\", then try again.</string>
+    <string name="app_info">Open App info</string>
 </resources>

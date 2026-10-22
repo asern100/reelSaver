@@ -1,13 +1,11 @@
 package com.asern.reelsaver
 
+import android.Manifest
 import android.content.ClipboardManager
-import android.content.ContentValues
-import android.content.Intent
-import android.net.Uri
+import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -17,12 +15,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -79,6 +72,12 @@ class MainActivity : AppCompatActivity() {
         updateBtn.setOnClickListener { updateEngine() }
 
         handleShare(intent)
+
+        // Needed for background download progress notifications (Android 13+)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -94,8 +93,7 @@ class MainActivity : AppCompatActivity() {
         if (!busy) startDownload(url)
     }
 
-    private fun extractUrl(text: String): String? =
-        Regex("""https?://\S+""").find(text)?.value
+    private fun extractUrl(text: String): String? = Downloader.extractUrl(text)
 
     private fun startDownload(url: String) {
         if (!url.startsWith("http")) { setStatus(getString(R.string.invalid_link)); return }
@@ -109,50 +107,26 @@ class MainActivity : AppCompatActivity() {
         playBtn.visibility = View.GONE
         setStatus(getString(R.string.preparing))
 
+        val audio = audioOnly.isChecked
         lifecycleScope.launch {
-            val tmp = File(cacheDir, "dl").apply { deleteRecursively(); mkdirs() }
             try {
-                val audio = audioOnly.isChecked
-                val request = YoutubeDLRequest(url).apply {
-                    if (audio) {
-                        // Audio only, best quality, converted to MP3
-                        addOption("-f", "ba/b")
-                        addOption("-x")
-                        addOption("--audio-format", "mp3")
-                        addOption("--audio-quality", "0")
-                    } else {
-                        // Best video + best audio, otherwise best single file
-                        addOption("-f", "bv*+ba/b")
-                        // Highest resolution first; at equal resolution prefer H.264 so every phone can play it
-                        addOption("-S", "res,fps,vcodec:h264,acodec:m4a")
-                        addOption("--merge-output-format", "mp4")
+                val saved = Downloader.download(this@MainActivity, url, audio, processId) { ev ->
+                    runOnUiThread {
+                        when (ev) {
+                            is Downloader.Event.Status -> {
+                                progress.isIndeterminate = true
+                                setStatus(ev.text)
+                            }
+                            is Downloader.Event.Progress -> {
+                                progress.isIndeterminate = false
+                                progress.progress = ev.percent
+                                setStatus(getString(R.string.progress_fmt, ev.percent, ev.etaSec.toInt()))
+                            }
+                        }
                     }
-                    addOption("--no-mtime")
-                    addOption("--no-playlist")
-                    addOption("-o", tmp.absolutePath + "/%(title).70B [%(id)s].%(ext)s")
                 }
-                if (Engine.lock.isLocked) setStatus(getString(R.string.waiting_update))
-                try {
-                    runRequest(request)
-                } catch (e: YoutubeDL.CanceledException) {
-                    throw e
-                } catch (e: Exception) {
-                    // Platforms change often: update the engine and retry once
-                    setStatus(getString(R.string.retry_updating))
-                    progress.isIndeterminate = true
-                    val up = Engine.update(this@MainActivity)
-                    if (!up.updated) throw e
-                    tmp.listFiles()?.forEach { it.delete() }
-                    setStatus(up.message + "\n" + getString(R.string.retrying))
-                    runRequest(request)
-                }
-                val files = tmp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
-                if (files.isEmpty()) throw Exception(getString(R.string.no_file))
-                val source = Source.fromUrl(url)
-                val saved = withContext(Dispatchers.IO) { files.map { saveToDownloads(it, source) } }
-                saved.reversed().forEach { HistoryStore.add(this@MainActivity, it) }
                 lastItem = saved.first()
-                setStatus(getString(R.string.done_saved, source.label(this@MainActivity), saved.joinToString("\n") { it.title }))
+                setStatus(getString(R.string.done_saved, saved.first().source.label(this@MainActivity), saved.joinToString("\n") { it.title }))
                 playBtn.text = getString(if (saved.first().isAudio) R.string.listen else R.string.watch)
                 playBtn.visibility = View.VISIBLE
             } catch (e: YoutubeDL.CanceledException) {
@@ -160,7 +134,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 setStatus(getString(R.string.failed, e.message?.take(400).orEmpty()))
             } finally {
-                tmp.deleteRecursively()
                 busy = false
                 downloadBtn.text = getString(if (audioOnly.isChecked) R.string.download_audio else R.string.download)
                 updateBtn.isEnabled = true
@@ -170,59 +143,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun runRequest(request: YoutubeDLRequest) = Engine.lock.withLock {
-        withContext(Dispatchers.IO) {
-            YoutubeDL.getInstance().execute(request, processId, false) { p, eta, _ ->
-                runOnUiThread {
-                    if (p > 0) {
-                        progress.isIndeterminate = false
-                        progress.progress = p.toInt()
-                        setStatus(getString(R.string.progress_fmt, p.toInt(), eta.toInt()))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun cancel() {
-        YoutubeDL.getInstance().destroyProcessById(processId)
-    }
-
-    /** Copies the file to Download/ReelSaver so it shows in the gallery and file manager */
-    private fun saveToDownloads(src: File, source: Source): DownloadItem {
-        val mime = when (src.extension.lowercase()) {
-            "mp4", "m4v" -> "video/mp4"
-            "webm" -> "video/webm"
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "m4a" -> "audio/mp4"
-            "mp3" -> "audio/mpeg"
-            "opus", "ogg" -> "audio/ogg"
-            else -> "application/octet-stream"
-        }
-        val savedUri: Uri
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, src.name)
-                put(MediaStore.Downloads.MIME_TYPE, mime)
-                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/ReelSaver")
-                put(MediaStore.Downloads.IS_PENDING, 1)
-            }
-            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw Exception(getString(R.string.cant_write))
-            contentResolver.openOutputStream(uri)!!.use { out -> src.inputStream().use { it.copyTo(out) } }
-            values.clear()
-            values.put(MediaStore.Downloads.IS_PENDING, 0)
-            contentResolver.update(uri, values, null, null)
-            savedUri = uri
-        } else {
-            @Suppress("DEPRECATION")
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "ReelSaver")
-            dir.mkdirs()
-            savedUri = Uri.fromFile(src.copyTo(File(dir, src.name), overwrite = true))
-        }
-        return DownloadItem(src.nameWithoutExtension, savedUri.toString(), mime, source, System.currentTimeMillis())
-    }
+    private fun cancel() = Downloader.cancel(processId)
 
     /** Manual engine update */
     private fun updateEngine() {

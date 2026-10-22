@@ -11,8 +11,8 @@ android {
         applicationId = "com.asern.reelsaver"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
     }
 
     // Fixed signing key so each new version installs over the previous one
