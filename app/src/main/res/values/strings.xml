@@ -4,6 +4,8 @@
     <string name="hint">الصق رابط الريل هنا</string>
     <string name="paste">لصق من الحافظة</string>
     <string name="download">تحميل</string>
+    <string name="download_audio">تحميل الصوت 🎵</string>
+    <string name="audio_only">صوت فقط (MP3)</string>
     <string name="cancel">إلغاء</string>
     <string name="update">تحديث محرك التحميل</string>
 </resources>

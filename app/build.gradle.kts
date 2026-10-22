@@ -11,8 +11,18 @@ android {
         applicationId = "com.asern.reelsaver"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    // مفتاح ثابت باش كل نسخة جديدة تتركّب فوق القديمة
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("reelsaver.keystore")
+            storePassword = "reelsaver"
+            keyAlias = "reelsaver"
+            keyPassword = "reelsaver"
+        }
     }
 
     // APK منفصل لكل معالج حتى يكون الحجم أصغر (أغلب التلفونات arm64-v8a)

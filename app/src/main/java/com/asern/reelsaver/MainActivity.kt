@@ -9,6 +9,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
+import com.google.android.material.materialswitch.MaterialSwitch
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var updateBtn: Button
     private lateinit var progress: ProgressBar
     private lateinit var status: TextView
+    private lateinit var audioOnly: MaterialSwitch
 
     private var busy = false
     private val processId = "reel-dl"
@@ -43,6 +45,16 @@ class MainActivity : AppCompatActivity() {
         updateBtn = findViewById(R.id.updateBtn)
         progress = findViewById(R.id.progress)
         status = findViewById(R.id.status)
+        audioOnly = findViewById(R.id.audioOnly)
+
+        // نتفكّر الاختيار حتى للمشاركة من التطبيقات الأخرى
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        audioOnly.isChecked = prefs.getBoolean("audio_only", false)
+        audioOnly.setOnCheckedChangeListener { _, on ->
+            prefs.edit().putBoolean("audio_only", on).apply()
+            downloadBtn.text = getString(if (on) R.string.download_audio else R.string.download)
+        }
+        downloadBtn.text = getString(if (audioOnly.isChecked) R.string.download_audio else R.string.download)
 
         pasteBtn.setOnClickListener {
             val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -79,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         busy = true
         downloadBtn.text = getString(R.string.cancel)
         updateBtn.isEnabled = false
+        audioOnly.isEnabled = false
         progress.isIndeterminate = true
         progress.visibility = View.VISIBLE
         setStatus("نجهّز في التحميل…")
@@ -86,10 +99,19 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val tmp = File(cacheDir, "dl").apply { deleteRecursively(); mkdirs() }
             try {
+                val audio = audioOnly.isChecked
                 val request = YoutubeDLRequest(url).apply {
-                    // أفضل فيديو + أفضل صوت، وإلا أفضل ملف جاهز
-                    addOption("-f", "bv*+ba/b")
-                    addOption("--merge-output-format", "mp4")
+                    if (audio) {
+                        // الصوت فقط، أعلى جودة، محوّل لـ MP3
+                        addOption("-f", "ba/b")
+                        addOption("-x")
+                        addOption("--audio-format", "mp3")
+                        addOption("--audio-quality", "0")
+                    } else {
+                        // أفضل فيديو + أفضل صوت، وإلا أفضل ملف جاهز
+                        addOption("-f", "bv*+ba/b")
+                        addOption("--merge-output-format", "mp4")
+                    }
                     addOption("--no-mtime")
                     addOption("-o", tmp.absolutePath + "/%(extractor)s_%(id)s.%(ext)s")
                 }
@@ -115,8 +137,9 @@ class MainActivity : AppCompatActivity() {
             } finally {
                 tmp.deleteRecursively()
                 busy = false
-                downloadBtn.text = getString(R.string.download)
+                downloadBtn.text = getString(if (audioOnly.isChecked) R.string.download_audio else R.string.download)
                 updateBtn.isEnabled = true
+                audioOnly.isEnabled = true
                 progress.visibility = View.GONE
             }
         }
@@ -134,6 +157,8 @@ class MainActivity : AppCompatActivity() {
             "jpg", "jpeg" -> "image/jpeg"
             "png" -> "image/png"
             "m4a" -> "audio/mp4"
+            "mp3" -> "audio/mpeg"
+            "opus", "ogg" -> "audio/ogg"
             else -> "application/octet-stream"
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
