@@ -1,0 +1,35 @@
+name: Install test (release APK)
+on:
+  workflow_dispatch:
+    inputs:
+      tag: { description: "Release tag", required: true, default: "v1.4.7" }
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-boot-timeout: 900
+          script: ./ci/install-release.sh
+      - name: Static checks
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download ${{ inputs.tag }} -R ${{ github.repository }} -p '*arm64*' -O r.apk --clobber
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          echo "::notice title=apksigner::$($BT/apksigner verify -v r.apk 2>&1 | tr '\n' ' ' | cut -c1-1500)"
+          echo "::notice title=badging::$($BT/aapt dump badging r.apk 2>&1 | grep -E 'package:|sdkVersion|native-code|ERROR' | tr '\n' ' ')"
