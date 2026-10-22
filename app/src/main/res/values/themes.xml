@@ -2,4 +2,8 @@
     <style name="Theme.ReelSaver" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">#1E8E5A</item>
     </style>
+    <style name="Theme.ReelSaver.Player" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#1E8E5A</item>
+        <item name="android:windowBackground">#000000</item>
+    </style>
 </resources>

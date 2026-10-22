@@ -3,6 +3,7 @@ package com.asern.reelsaver
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -31,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var status: TextView
     private lateinit var audioOnly: MaterialSwitch
+    private lateinit var playBtn: Button
+    private var lastItem: DownloadItem? = null
 
     private var busy = false
     private val processId = "reel-dl"
@@ -46,6 +49,11 @@ class MainActivity : AppCompatActivity() {
         progress = findViewById(R.id.progress)
         status = findViewById(R.id.status)
         audioOnly = findViewById(R.id.audioOnly)
+        playBtn = findViewById(R.id.playBtn)
+        playBtn.setOnClickListener { lastItem?.let { openDownload(it) } }
+        findViewById<Button>(R.id.historyBtn).setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
 
         // نتفكّر الاختيار حتى للمشاركة من التطبيقات الأخرى
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
@@ -94,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         audioOnly.isEnabled = false
         progress.isIndeterminate = true
         progress.visibility = View.VISIBLE
+        playBtn.visibility = View.GONE
         setStatus("نجهّز في التحميل…")
 
         lifecycleScope.launch {
@@ -110,10 +119,13 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         // أفضل فيديو + أفضل صوت، وإلا أفضل ملف جاهز
                         addOption("-f", "bv*+ba/b")
+                        // أعلى دقة أولاً، وفي نفس الدقة نفضّل H.264 باش يتقرى على كل التلفونات
+                        addOption("-S", "res,fps,vcodec:h264,acodec:m4a")
                         addOption("--merge-output-format", "mp4")
                     }
                     addOption("--no-mtime")
-                    addOption("-o", tmp.absolutePath + "/%(extractor)s_%(id)s.%(ext)s")
+                    addOption("--no-playlist")
+                    addOption("-o", tmp.absolutePath + "/%(title).70B [%(id)s].%(ext)s")
                 }
                 withContext(Dispatchers.IO) {
                     YoutubeDL.getInstance().execute(request, processId, false) { p, eta, _ ->
@@ -128,8 +140,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 val files = tmp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
                 if (files.isEmpty()) throw Exception("ما تحمّل حتى ملف")
-                val saved = withContext(Dispatchers.IO) { files.map { saveToDownloads(it) } }
-                setStatus("✅ تحمّل في Download/ReelSaver:\n" + saved.joinToString("\n"))
+                val source = Source.fromUrl(url)
+                val saved = withContext(Dispatchers.IO) { files.map { saveToDownloads(it, source) } }
+                saved.reversed().forEach { HistoryStore.add(this@MainActivity, it) }
+                lastItem = saved.first()
+                setStatus("✅ تحمّل (${source.label}) في Download/ReelSaver:\n" + saved.joinToString("\n") { it.title })
+                playBtn.text = getString(if (saved.first().isAudio) R.string.listen else R.string.watch)
+                playBtn.visibility = View.VISIBLE
             } catch (e: YoutubeDL.CanceledException) {
                 setStatus("تلغى التحميل")
             } catch (e: Exception) {
@@ -150,7 +167,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** ينسخ الملف لـ Download/ReelSaver باش يبان في الغاليري ومدير الملفات */
-    private fun saveToDownloads(src: File): String {
+    private fun saveToDownloads(src: File, source: Source): DownloadItem {
         val mime = when (src.extension.lowercase()) {
             "mp4", "m4v" -> "video/mp4"
             "webm" -> "video/webm"
@@ -161,6 +178,7 @@ class MainActivity : AppCompatActivity() {
             "opus", "ogg" -> "audio/ogg"
             else -> "application/octet-stream"
         }
+        val savedUri: Uri
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, src.name)
@@ -174,13 +192,14 @@ class MainActivity : AppCompatActivity() {
             values.clear()
             values.put(MediaStore.Downloads.IS_PENDING, 0)
             contentResolver.update(uri, values, null, null)
+            savedUri = uri
         } else {
             @Suppress("DEPRECATION")
             val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "ReelSaver")
             dir.mkdirs()
-            src.copyTo(File(dir, src.name), overwrite = true)
+            savedUri = Uri.fromFile(src.copyTo(File(dir, src.name), overwrite = true))
         }
-        return src.name
+        return DownloadItem(src.nameWithoutExtension, savedUri.toString(), mime, source, System.currentTimeMillis())
     }
 
     /** تيك توك وانستغرام يبدّلو كل مرة، فالتحديث يصلّح أغلب المشاكل */
