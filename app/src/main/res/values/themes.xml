@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.ReelSaver" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#1E8E5A</item>
+    </style>
+</resources>
