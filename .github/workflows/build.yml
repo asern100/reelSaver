@@ -26,6 +26,19 @@ jobs:
         with:
           name: ReelSaver-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Smoke test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-boot-timeout: 900
+          script: ./ci/smoke.sh
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
@@ -33,4 +46,6 @@ jobs:
           name: ReelSaver v1.4.${{ github.run_number }}
           body: |
             حمّل app-arm64-v8a-debug.apk (أغلب التلفونات). للتلفونات القديمة: app-armeabi-v7a-debug.apk
-          files: app/build/outputs/apk/debug/*.apk
+          files: |
+            app/build/outputs/apk/debug/*arm64-v8a*.apk
+            app/build/outputs/apk/debug/*armeabi-v7a*.apk
