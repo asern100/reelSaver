@@ -3,6 +3,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -23,3 +26,11 @@ jobs:
         with:
           name: ReelSaver-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: ReelSaver v1.0.${{ github.run_number }}
+          body: |
+            حمّل app-arm64-v8a-debug.apk (أغلب التلفونات). للتلفونات القديمة: app-armeabi-v7a-debug.apk
+          files: app/build/outputs/apk/debug/*.apk
