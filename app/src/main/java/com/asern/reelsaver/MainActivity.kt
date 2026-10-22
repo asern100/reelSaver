@@ -20,6 +20,7 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -51,11 +52,14 @@ class MainActivity : AppCompatActivity() {
         audioOnly = findViewById(R.id.audioOnly)
         playBtn = findViewById(R.id.playBtn)
         playBtn.setOnClickListener { lastItem?.let { openDownload(it) } }
+        findViewById<Button>(R.id.settingsBtn).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
         findViewById<Button>(R.id.historyBtn).setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
 
-        // نتفكّر الاختيار حتى للمشاركة من التطبيقات الأخرى
+        // Remember the choice, also for links shared from other apps
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
         audioOnly.isChecked = prefs.getBoolean("audio_only", false)
         audioOnly.setOnCheckedChangeListener { _, on ->
@@ -67,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         pasteBtn.setOnClickListener {
             val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val text = cm.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
-            extractUrl(text)?.let { urlInput.setText(it) } ?: setStatus("ما لقيتش رابط في الحافظة")
+            extractUrl(text)?.let { urlInput.setText(it) } ?: setStatus(getString(R.string.no_link_clipboard))
         }
         downloadBtn.setOnClickListener {
             if (busy) cancel() else startDownload(urlInput.text.toString().trim())
@@ -82,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         handleShare(intent)
     }
 
-    /** لما تعمل "مشاركة" للريل من التطبيق ← يبدا التحميل وحدو */
+    /** Shared from TikTok/Instagram/Facebook/YouTube: start downloading right away */
     private fun handleShare(intent: Intent?) {
         if (intent?.action != Intent.ACTION_SEND) return
         val url = extractUrl(intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()) ?: return
@@ -94,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         Regex("""https?://\S+""").find(text)?.value
 
     private fun startDownload(url: String) {
-        if (!url.startsWith("http")) { setStatus("حط رابط صحيح"); return }
+        if (!url.startsWith("http")) { setStatus(getString(R.string.invalid_link)); return }
 
         busy = true
         downloadBtn.text = getString(R.string.cancel)
@@ -103,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         progress.isIndeterminate = true
         progress.visibility = View.VISIBLE
         playBtn.visibility = View.GONE
-        setStatus("نجهّز في التحميل…")
+        setStatus(getString(R.string.preparing))
 
         lifecycleScope.launch {
             val tmp = File(cacheDir, "dl").apply { deleteRecursively(); mkdirs() }
@@ -111,15 +115,15 @@ class MainActivity : AppCompatActivity() {
                 val audio = audioOnly.isChecked
                 val request = YoutubeDLRequest(url).apply {
                     if (audio) {
-                        // الصوت فقط، أعلى جودة، محوّل لـ MP3
+                        // Audio only, best quality, converted to MP3
                         addOption("-f", "ba/b")
                         addOption("-x")
                         addOption("--audio-format", "mp3")
                         addOption("--audio-quality", "0")
                     } else {
-                        // أفضل فيديو + أفضل صوت، وإلا أفضل ملف جاهز
+                        // Best video + best audio, otherwise best single file
                         addOption("-f", "bv*+ba/b")
-                        // أعلى دقة أولاً، وفي نفس الدقة نفضّل H.264 باش يتقرى على كل التلفونات
+                        // Highest resolution first; at equal resolution prefer H.264 so every phone can play it
                         addOption("-S", "res,fps,vcodec:h264,acodec:m4a")
                         addOption("--merge-output-format", "mp4")
                     }
@@ -127,30 +131,34 @@ class MainActivity : AppCompatActivity() {
                     addOption("--no-playlist")
                     addOption("-o", tmp.absolutePath + "/%(title).70B [%(id)s].%(ext)s")
                 }
-                withContext(Dispatchers.IO) {
-                    YoutubeDL.getInstance().execute(request, processId, false) { p, eta, _ ->
-                        runOnUiThread {
-                            if (p > 0) {
-                                progress.isIndeterminate = false
-                                progress.progress = p.toInt()
-                                setStatus("جاري التحميل… ${p.toInt()}%  (باقي ${eta}s)")
-                            }
-                        }
-                    }
+                if (Engine.lock.isLocked) setStatus(getString(R.string.waiting_update))
+                try {
+                    runRequest(request)
+                } catch (e: YoutubeDL.CanceledException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Platforms change often: update the engine and retry once
+                    setStatus(getString(R.string.retry_updating))
+                    progress.isIndeterminate = true
+                    val up = Engine.update(this@MainActivity)
+                    if (!up.updated) throw e
+                    tmp.listFiles()?.forEach { it.delete() }
+                    setStatus(up.message + "\n" + getString(R.string.retrying))
+                    runRequest(request)
                 }
                 val files = tmp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
-                if (files.isEmpty()) throw Exception("ما تحمّل حتى ملف")
+                if (files.isEmpty()) throw Exception(getString(R.string.no_file))
                 val source = Source.fromUrl(url)
                 val saved = withContext(Dispatchers.IO) { files.map { saveToDownloads(it, source) } }
                 saved.reversed().forEach { HistoryStore.add(this@MainActivity, it) }
                 lastItem = saved.first()
-                setStatus("✅ تحمّل (${source.label}) في Download/ReelSaver:\n" + saved.joinToString("\n") { it.title })
+                setStatus(getString(R.string.done_saved, source.label(this@MainActivity), saved.joinToString("\n") { it.title }))
                 playBtn.text = getString(if (saved.first().isAudio) R.string.listen else R.string.watch)
                 playBtn.visibility = View.VISIBLE
             } catch (e: YoutubeDL.CanceledException) {
-                setStatus("تلغى التحميل")
+                setStatus(getString(R.string.canceled))
             } catch (e: Exception) {
-                setStatus("❌ فشل التحميل:\n${e.message?.take(400)}\n\nجرّب «تحديث المحرك» وعاود. بعض الريلز الخاصة (private) ما تتحمّلش.")
+                setStatus(getString(R.string.failed, e.message?.take(400).orEmpty()))
             } finally {
                 tmp.deleteRecursively()
                 busy = false
@@ -162,11 +170,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private suspend fun runRequest(request: YoutubeDLRequest) = Engine.lock.withLock {
+        withContext(Dispatchers.IO) {
+            YoutubeDL.getInstance().execute(request, processId, false) { p, eta, _ ->
+                runOnUiThread {
+                    if (p > 0) {
+                        progress.isIndeterminate = false
+                        progress.progress = p.toInt()
+                        setStatus(getString(R.string.progress_fmt, p.toInt(), eta.toInt()))
+                    }
+                }
+            }
+        }
+    }
+
     private fun cancel() {
         YoutubeDL.getInstance().destroyProcessById(processId)
     }
 
-    /** ينسخ الملف لـ Download/ReelSaver باش يبان في الغاليري ومدير الملفات */
+    /** Copies the file to Download/ReelSaver so it shows in the gallery and file manager */
     private fun saveToDownloads(src: File, source: Source): DownloadItem {
         val mime = when (src.extension.lowercase()) {
             "mp4", "m4v" -> "video/mp4"
@@ -187,7 +209,7 @@ class MainActivity : AppCompatActivity() {
                 put(MediaStore.Downloads.IS_PENDING, 1)
             }
             val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw Exception("ما نجمش نكتب في Downloads")
+                ?: throw Exception(getString(R.string.cant_write))
             contentResolver.openOutputStream(uri)!!.use { out -> src.inputStream().use { it.copyTo(out) } }
             values.clear()
             values.put(MediaStore.Downloads.IS_PENDING, 0)
@@ -202,22 +224,13 @@ class MainActivity : AppCompatActivity() {
         return DownloadItem(src.nameWithoutExtension, savedUri.toString(), mime, source, System.currentTimeMillis())
     }
 
-    /** تيك توك وانستغرام يبدّلو كل مرة، فالتحديث يصلّح أغلب المشاكل */
+    /** Manual engine update */
     private fun updateEngine() {
         updateBtn.isEnabled = false
         downloadBtn.isEnabled = false
-        setStatus("نحدّث في محرك التحميل (yt-dlp)…")
+        setStatus(getString(R.string.updating))
         lifecycleScope.launch {
-            val msg = try {
-                val st = withContext(Dispatchers.IO) {
-                    YoutubeDL.getInstance().updateYoutubeDL(applicationContext, YoutubeDL.UpdateChannel._STABLE)
-                }
-                val v = YoutubeDL.getInstance().versionName(applicationContext)
-                "✅ المحرك: ${st?.name ?: "OK"} — النسخة $v"
-            } catch (e: Exception) {
-                "❌ فشل التحديث: ${e.message}"
-            }
-            setStatus(msg)
+            setStatus(Engine.update(this@MainActivity).message)
             updateBtn.isEnabled = true
             downloadBtn.isEnabled = true
         }

@@ -11,13 +11,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-/** منين جا الفيديو — يتعرف من الرابط */
-enum class Source(val label: String, val color: Int) {
+/** Where the video came from, detected from the link */
+enum class Source(private val name_: String?, val color: Int) {
     TIKTOK("TikTok", 0xFF111111.toInt()),
     INSTAGRAM("Instagram", 0xFFC13584.toInt()),
     FACEBOOK("Facebook", 0xFF1877F2.toInt()),
     YOUTUBE("YouTube", 0xFFE62117.toInt()),
-    OTHER("أخرى", 0xFF666666.toInt());
+    OTHER(null, 0xFF666666.toInt());
+
+    fun label(c: Context): String = name_ ?: c.getString(R.string.source_other)
 
     companion object {
         fun fromUrl(url: String): Source {
@@ -34,9 +36,9 @@ enum class Source(val label: String, val color: Int) {
     }
 }
 
-/** يلوّن TextView كطاغ (chip) بلون المصدر */
+/** Styles a TextView as a colored source tag */
 fun TextView.showSourceTag(s: Source) {
-    text = "● " + s.label
+    text = "● " + s.label(context)
     setTextColor(0xFFFFFFFF.toInt())
     background = GradientDrawable().apply {
         cornerRadius = 40f
@@ -55,7 +57,7 @@ data class DownloadItem(
     val isImage get() = mime.startsWith("image")
 }
 
-/** سجل التحميلات محفوظ في ملف JSON داخل التطبيق */
+/** Download history stored as JSON inside the app */
 object HistoryStore {
     private fun file(c: Context) = File(c.filesDir, "history.json")
 
@@ -91,7 +93,7 @@ object HistoryStore {
         save(c, load(c).filterNot { it.uri == item.uri && it.time == item.time })
 }
 
-/** يحل الفيديو ولا الصوت في المشغّل، والصور في الغاليري */
+/** Opens video/audio in the built-in player, images in the gallery */
 fun Context.openDownload(item: DownloadItem) {
     if (item.isImage) {
         try {
@@ -100,7 +102,7 @@ fun Context.openDownload(item: DownloadItem) {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             })
         } catch (e: Exception) {
-            Toast.makeText(this, "ما نجمتش نحل الصورة", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.cant_open_image, Toast.LENGTH_SHORT).show()
         }
         return
     }

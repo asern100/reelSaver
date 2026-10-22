@@ -29,8 +29,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.${{ github.run_number }}
-          name: ReelSaver v1.2.${{ github.run_number }}
+          tag_name: v1.3.${{ github.run_number }}
+          name: ReelSaver v1.3.${{ github.run_number }}
           body: |
             حمّل app-arm64-v8a-debug.apk (أغلب التلفونات). للتلفونات القديمة: app-armeabi-v7a-debug.apk
           files: app/build/outputs/apk/debug/*.apk

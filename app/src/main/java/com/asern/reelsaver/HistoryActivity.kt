@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButtonToggleGroup
 import java.io.File
 
-/** صفحة «تحميلاتي»: كل اللي تحمّل، بطاغ المصدر وفلتر فيديو/صوت */
+/** Downloads screen: everything downloaded, with source tags and a video/audio filter */
 class HistoryActivity : AppCompatActivity() {
 
     private lateinit var list: RecyclerView
@@ -60,7 +60,7 @@ class HistoryActivity : AppCompatActivity() {
                 try {
                     if (uri.scheme == "file") File(uri.path!!).delete()
                     else contentResolver.delete(uri, null, null)
-                } catch (_: Exception) { /* الملف تنحّى من قبل ولا ما عندناش الحق */ }
+                } catch (_: Exception) { /* already deleted, or no permission after reinstall */ }
                 HistoryStore.remove(this, item); refresh()
             }
             .setNeutralButton(R.string.remove_from_list) { _, _ ->

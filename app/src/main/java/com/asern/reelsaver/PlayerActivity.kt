@@ -11,7 +11,7 @@ import android.widget.Toast
 import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 
-/** مشغّل داخل التطبيق للفيديو والصوت */
+/** Built-in player for video and audio */
 class PlayerActivity : AppCompatActivity() {
 
     private lateinit var video: VideoView
@@ -39,7 +39,7 @@ class PlayerActivity : AppCompatActivity() {
             controller.show(0)
         }
         video.setOnErrorListener { _, _, _ ->
-            Toast.makeText(this, "المشغّل الداخلي ما نجمش، نحلّو بتطبيق آخر", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.player_failed, Toast.LENGTH_SHORT).show()
             openExternal(uri, mime)
             true
         }
@@ -67,7 +67,7 @@ class PlayerActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             })
         } catch (e: Exception) {
-            Toast.makeText(this, "ما فماش تطبيق يحل الملف هذا", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.no_app, Toast.LENGTH_SHORT).show()
         }
     }
 

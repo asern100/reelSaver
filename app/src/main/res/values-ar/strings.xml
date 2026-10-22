@@ -1,0 +1,56 @@
+<resources>
+    <string name="subtitle">تيك توك • إنستغرام • فيسبوك • يوتيوب — بأعلى جودة متاحة</string>
+    <string name="hint">الصق رابط الفيديو هنا</string>
+    <string name="paste">لصق من الحافظة</string>
+    <string name="download">تحميل</string>
+    <string name="download_audio">تحميل الصوت 🎵</string>
+    <string name="audio_only">صوت فقط (MP3)</string>
+    <string name="cancel">إلغاء</string>
+    <string name="update">تحديث محرك التحميل</string>
+    <string name="my_downloads">📂 تنزيلاتي</string>
+    <string name="watch">▶ شاهد الفيديو</string>
+    <string name="listen">▶ استمع إلى الصوت</string>
+    <string name="all">الكل</string>
+    <string name="video">فيديو</string>
+    <string name="audio">صوت</string>
+    <string name="image">صورة</string>
+    <string name="filter_video">🎬 فيديو</string>
+    <string name="filter_audio">🎵 صوت</string>
+    <string name="source_other">أخرى</string>
+    <string name="empty">لم تقم بتنزيل أي شيء بعد</string>
+    <string name="delete_q">هل تريد حذفه؟</string>
+    <string name="delete_file">حذف الملف</string>
+    <string name="remove_from_list">إزالته من القائمة فقط</string>
+    <string name="share">مشاركة</string>
+    <string name="open_with">فتح بتطبيق آخر</string>
+    <string name="hint_long_press">اضغط للتشغيل • اضغط مطولًا للحذف</string>
+    <string name="back_arrow">→</string>
+
+    <string name="no_link_clipboard">لم يتم العثور على رابط في الحافظة</string>
+    <string name="invalid_link">أدخل رابطًا صحيحًا</string>
+    <string name="preparing">جارٍ تجهيز التنزيل…</string>
+    <string name="waiting_update">جارٍ تحديث محرك التحميل، لحظة…</string>
+    <string name="retry_updating">فشل التنزيل… جارٍ تحديث المحرك وإعادة المحاولة</string>
+    <string name="retrying">جارٍ إعادة محاولة التنزيل…</string>
+    <string name="no_file">لم يتم تنزيل أي ملف</string>
+    <string name="done_saved">✅ تم التنزيل (%1$s) في Download/ReelSaver:\n%2$s</string>
+    <string name="canceled">تم إلغاء التنزيل</string>
+    <string name="failed">❌ فشل التنزيل:\n%1$s\n\nالمحرك محدَّث، لذا فالفيديو على الأرجح خاص أو يتطلب تسجيل الدخول أو تم حذفه.</string>
+    <string name="progress_fmt">جارٍ التنزيل… %1$d%%  (متبقٍّ %2$d ث)</string>
+    <string name="cant_write">تعذّر الحفظ في مجلد التنزيلات</string>
+    <string name="updating">جارٍ تحديث محرك التحميل (yt-dlp)…</string>
+    <string name="engine_updated">✅ تم تحديث المحرك إلى النسخة %1$s</string>
+    <string name="engine_latest">👌 لديك أحدث نسخة (%1$s)</string>
+    <string name="engine_failed">❌ تعذّر التحديث. تحقق من اتصالك بالإنترنت وأعد المحاولة.</string>
+    <string name="player_failed">تعذّر التشغيل في المشغّل الداخلي، سيتم فتحه بتطبيق آخر</string>
+    <string name="no_app">لا يوجد تطبيق يمكنه فتح هذا الملف</string>
+    <string name="cant_open_image">تعذّر فتح الصورة</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="language">اللغة</string>
+    <string name="lang_system">لغة الهاتف</string>
+    <string name="auto_update">تحديث المحرك تلقائيًا كل أسبوع</string>
+    <string name="engine_section">محرك التحميل</string>
+    <string name="engine_info">النسخة: %1$s\nآخر تحديث: %2$s</string>
+    <string name="never">لم يتم بعد</string>
+</resources>

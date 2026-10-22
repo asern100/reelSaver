@@ -10,7 +10,8 @@ class App : Application() {
         super.onCreate()
         try {
             YoutubeDL.getInstance().init(this)
-            FFmpeg.getInstance().init(this) // لدمج الصورة والصوت بأعلى جودة
+            FFmpeg.getInstance().init(this) // needed to merge best video + audio
+            Engine.autoUpdateIfDue(this)     // weekly automatic update
         } catch (e: Exception) {
             Log.e("ReelSaver", "init failed", e)
         }
