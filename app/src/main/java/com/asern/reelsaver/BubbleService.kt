@@ -60,11 +60,20 @@ class BubbleService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        // App may already be open when the service is turned on
+        main.postDelayed({ refreshFor(rootInActiveWindow?.packageName?.toString()) }, 500)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        val pkg = event.packageName?.toString() ?: return
+        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            event.eventType != AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
+        val pkg = event.packageName?.toString()
+            ?: rootInActiveWindow?.packageName?.toString() ?: return
+        refreshFor(pkg)
+    }
+
+    private fun refreshFor(pkg: String?) {
+        if (pkg == null) return
         if (pkg in SUPPORTED) {
             currentPkg = pkg
             if (isEnabled(this)) show() else hide()
