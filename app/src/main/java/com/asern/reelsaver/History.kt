@@ -3,7 +3,9 @@ package com.asern.reelsaver
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import androidx.core.content.ContextCompat
 import android.net.Uri
 import android.widget.TextView
 import android.widget.Toast
@@ -12,12 +14,12 @@ import org.json.JSONObject
 import java.io.File
 
 /** Where the video came from, detected from the link */
-enum class Source(private val name_: String?, val color: Int) {
-    TIKTOK("TikTok", 0xFF111111.toInt()),
-    INSTAGRAM("Instagram", 0xFFC13584.toInt()),
-    FACEBOOK("Facebook", 0xFF1877F2.toInt()),
-    YOUTUBE("YouTube", 0xFFE62117.toInt()),
-    OTHER(null, 0xFF666666.toInt());
+enum class Source(private val name_: String?, val colorRes: Int) {
+    TIKTOK("TikTok", R.color.src_tiktok),
+    INSTAGRAM("Instagram", R.color.src_instagram),
+    FACEBOOK("Facebook", R.color.src_facebook),
+    YOUTUBE("YouTube", R.color.src_youtube),
+    OTHER(null, R.color.src_other);
 
     fun label(c: Context): String = name_ ?: c.getString(R.string.source_other)
 
@@ -36,13 +38,18 @@ enum class Source(private val name_: String?, val color: Int) {
     }
 }
 
-/** Styles a TextView as a colored source tag */
+/** Styles a TextView as a soft colored pill (iOS style) */
 fun TextView.showSourceTag(s: Source) {
-    text = "● " + s.label(context)
-    setTextColor(0xFFFFFFFF.toInt())
+    val c = ContextCompat.getColor(context, s.colorRes)
+    text = s.label(context)
+    setTextColor(c)
+    textSize = 12f
+    typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    val d = resources.displayMetrics.density
+    setPadding((8 * d).toInt(), (2 * d).toInt(), (8 * d).toInt(), (3 * d).toInt())
     background = GradientDrawable().apply {
-        cornerRadius = 40f
-        setColor(s.color)
+        cornerRadius = 6 * d
+        setColor((c and 0x00FFFFFF) or 0x24000000)
     }
 }
 

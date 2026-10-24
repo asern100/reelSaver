@@ -39,11 +39,19 @@ jobs:
           target: google_apis
           emulator-boot-timeout: 900
           script: ./ci/smoke.sh
+      - name: Publish screenshots
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          git init -q && git checkout -q -b screenshots
+          git add . && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "screenshots ${{ github.sha }}"
+          git push -qf https://x-access-token:${{ github.token }}@github.com/${{ github.repository }} screenshots
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.6.${{ github.run_number }}
-          name: ReelSaver v1.6.${{ github.run_number }}
+          tag_name: v1.7.${{ github.run_number }}
+          name: ReelSaver v1.7.${{ github.run_number }}
           body: |
             حمّل app-arm64-v8a-debug.apk (أغلب التلفونات). للتلفونات القديمة: app-armeabi-v7a-debug.apk
           files: |
