@@ -23,7 +23,7 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           set -o pipefail
           if ! gradle assembleDebug --no-daemon 2>&1 | tee build.log; then
-            grep -E "^e: |error:|ERROR:|AAPT|What went wrong|Caused by|> " build.log | head -30 | while IFS= read -r l; do echo "::error::$l"; done
+            grep -E "^e: |error:|ERROR:|AAPT|resource .* not found|Unresolved|Caused by" build.log | grep -v "> Task" | head -9 | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           fi
       - uses: actions/upload-artifact@v4
