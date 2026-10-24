@@ -24,6 +24,7 @@ object Engine {
 
     /** Updates now and returns a localized message. */
     suspend fun update(c: Context): Result = lock.withLock {
+        App.ready.await()
         try {
             val st = YoutubeDL.getInstance()
                 .updateYoutubeDL(c.applicationContext, YoutubeDL.UpdateChannel._STABLE)

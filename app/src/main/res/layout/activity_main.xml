@@ -36,6 +36,7 @@
 
         <TextView
             style="@style/ReelSaver.LargeTitle"
+            android:textAlignment="viewStart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/app_name" />
@@ -45,6 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/subtitle"
+            android:textAlignment="viewStart"
             android:textColor="@color/label2"
             android:textSize="15sp" />
 
@@ -162,6 +164,7 @@
             android:layout_marginTop="32dp"
             android:paddingHorizontal="16dp"
             android:text="@string/supported"
+            android:textAlignment="viewStart"
             android:textColor="@color/label2"
             android:textSize="13sp" />
 
@@ -173,23 +176,19 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <HorizontalScrollView
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/platforms"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/platforms"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="@string/tip"
+                android:textAlignment="viewStart"
                 android:textColor="@color/label2"
                 android:textSize="13sp" />
         </LinearLayout>

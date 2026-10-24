@@ -17,7 +17,7 @@ screens() {
   adb shell am force-stop $PKG; adb shell am start -W -n $MAIN --es open history > /dev/null; shot "history_$1"
   adb shell am force-stop $PKG; adb shell am start -W -n $MAIN --es open settings > /dev/null; shot "settings_$1"
 }
-adb shell cmd uimode night no;  screens light
+adb shell cmd uimode night no; adb shell am start -W -n $MAIN > /dev/null; sleep 15; screens light
 adb shell cmd uimode night yes; screens dark
 adb shell cmd locale set-app-locales $PKG --locales ar
 adb shell cmd uimode night no;  screens ar_light

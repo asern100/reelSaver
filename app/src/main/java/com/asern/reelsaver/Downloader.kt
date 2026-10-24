@@ -33,6 +33,7 @@ object Downloader {
         c: Context, url: String, audio: Boolean, processId: String,
         onEvent: (Event) -> Unit,
     ): List<DownloadItem> {
+        App.ready.await()
         val tmp = File(c.cacheDir, "dl-$processId").apply { deleteRecursively(); mkdirs() }
         try {
             val request = YoutubeDLRequest(url).apply {

@@ -7,9 +7,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -76,10 +76,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Supported platform pills
-        val row = findViewById<LinearLayout>(R.id.platforms)
+        val row = findViewById<ViewGroup>(R.id.platforms)
         Source.entries.filter { it != Source.OTHER }.forEach { s ->
-            row.addView(TextView(this).apply { showSourceTag(s) },
-                LinearLayout.LayoutParams(-2, -2).apply { marginEnd = (8 * resources.displayMetrics.density).toInt() })
+            row.addView(TextView(this).apply { showSourceTag(s) })
         }
 
         handleShare(intent)
