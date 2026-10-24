@@ -21,7 +21,11 @@ jobs:
       - name: Build
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle assembleDebug --no-daemon --stacktrace
+          set -o pipefail
+          if ! gradle assembleDebug --no-daemon 2>&1 | tee build.log; then
+            grep -E "^e: |error:|ERROR:|AAPT|What went wrong|Caused by|> " build.log | head -30 | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: ReelSaver-apk
