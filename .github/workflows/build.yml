@@ -30,6 +30,14 @@ jobs:
         with:
           name: ReelSaver-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Prepare music-removal test clip (speech + music)
+        run: |
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -yq ffmpeg)
+          pip install -q numpy
+          git clone -q --depth 1 --filter=blob:none --sparse https://github.com/librosa/data ld
+          (cd ld && git sparse-checkout set --no-cone /audio/198-209-0000.hq.ogg "/audio/Kevin_MacLeod_-_Vibe_Ace.hq.ogg")
+          mkdir -p nmtest
+          python3 ci/nm_mix.py make ld/audio/198-209-0000.hq.ogg "ld/audio/Kevin_MacLeod_-_Vibe_Ace.hq.ogg" nmtest
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -42,7 +50,7 @@ jobs:
           arch: x86_64
           target: google_apis
           emulator-boot-timeout: 900
-          script: ./ci/smoke.sh
+          script: ./ci/smoke.sh && ./ci/music_test.sh
       - name: Publish screenshots
         if: always()
         run: |
@@ -54,8 +62,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.7.${{ github.run_number }}
-          name: ReelSaver v1.7.${{ github.run_number }}
+          tag_name: v1.8.${{ github.run_number }}
+          name: ReelSaver v1.8.${{ github.run_number }}
           body: |
             حمّل app-arm64-v8a-debug.apk (أغلب التلفونات). للتلفونات القديمة: app-armeabi-v7a-debug.apk
           files: |
