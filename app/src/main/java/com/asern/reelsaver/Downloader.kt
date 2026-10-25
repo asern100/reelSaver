@@ -18,7 +18,8 @@ object Downloader {
 
     sealed class Event {
         data class Status(val text: String) : Event()
-        data class Progress(val percent: Int, val etaSec: Long) : Event()
+        /** [label]: ready-made text for steps other than downloading (e.g. removing music) */
+        data class Progress(val percent: Int, val etaSec: Long, val label: String? = null) : Event()
     }
 
     fun extractUrl(text: String?): String? =
@@ -27,10 +28,12 @@ object Downloader {
     /**
      * Downloads [url] (video or MP3), saves to Download/ReelSaver, records it in history.
      * Updates the engine and retries once if the first attempt fails.
+     * With [noMusic], only a copy without music (voices kept) is saved.
      * [onEvent] is called from a background thread.
      */
     suspend fun download(
         c: Context, url: String, audio: Boolean, processId: String,
+        noMusic: Boolean = false,
         onEvent: (Event) -> Unit,
     ): List<DownloadItem> {
         App.ready.await()
@@ -68,8 +71,13 @@ object Downloader {
                 onEvent(Event.Status(up.message + "\n" + c.getString(R.string.retrying)))
                 run(request, processId, onEvent)
             }
-            val files = tmp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
+            var files = tmp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
             if (files.isEmpty()) throw Exception(c.getString(R.string.no_file))
+            if (noMusic) files = files.map { f ->
+                val mime = mimeOf(f)
+                if (mime.startsWith("image")) f
+                else removeMusic(c, f, mime.startsWith("audio"), onEvent)
+            }
             val source = Source.fromUrl(url)
             val saved = withContext(Dispatchers.IO) { files.map { save(c, it, source) } }
             saved.reversed().forEach { HistoryStore.add(c, it) }
@@ -90,18 +98,31 @@ object Downloader {
             }
         }
 
+    /** Makes "<name> (no music).mp4" next to [f] and returns it */
+    suspend fun removeMusic(c: Context, f: File, isAudio: Boolean, onEvent: (Event) -> Unit): File {
+        val ext = if (!isAudio) "mp4" else if (f.extension.lowercase() == "mp3") "mp3" else "m4a"
+        val name = f.nameWithoutExtension.substringBeforeLast(" [")   // drop the "[video id]"
+            .take(70) + " (" + c.getString(R.string.nm_suffix) + ")." + ext
+        val out = File(File(f.parentFile, "nm-out").apply { mkdirs() }, name.replace('/', '_'))
+        MusicRemover.process(c, f, out, isAudio, onEvent)
+        return out
+    }
+
+    fun mimeOf(src: File) = when (src.extension.lowercase()) {
+        "mp4", "m4v" -> "video/mp4"
+        "webm" -> "video/webm"
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        "m4a" -> "audio/mp4"
+        "mp3" -> "audio/mpeg"
+        "opus", "ogg" -> "audio/ogg"
+        "mkv" -> "video/x-matroska"
+        else -> "application/octet-stream"
+    }
+
     /** Copies the file to Download/ReelSaver so it shows in the gallery and file manager */
-    private fun save(c: Context, src: File, source: Source): DownloadItem {
-        val mime = when (src.extension.lowercase()) {
-            "mp4", "m4v" -> "video/mp4"
-            "webm" -> "video/webm"
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "m4a" -> "audio/mp4"
-            "mp3" -> "audio/mpeg"
-            "opus", "ogg" -> "audio/ogg"
-            else -> "application/octet-stream"
-        }
+    fun save(c: Context, src: File, source: Source): DownloadItem {
+        val mime = mimeOf(src)
         val savedUri: Uri
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {

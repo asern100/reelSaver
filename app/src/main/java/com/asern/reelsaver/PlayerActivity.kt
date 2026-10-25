@@ -57,6 +57,19 @@ class PlayerActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.externalBtn).visibility =
             if (uri.scheme == "content") View.VISIBLE else View.GONE
+
+        // Make a copy without music (voices kept), in the background
+        val title = intent.getStringExtra("title").orEmpty()
+        findViewById<Button>(R.id.noMusicBtn).apply {
+            val already = title.endsWith("(" + getString(R.string.nm_suffix) + ")")
+            visibility = if (uri.scheme == "content" && !already) View.VISIBLE else View.GONE
+            setOnClickListener {
+                DownloadService.startLocal(this@PlayerActivity, uri, title, mime,
+                    Source.of(intent.getStringExtra("source").orEmpty()))
+                Toast.makeText(this@PlayerActivity, R.string.bg_started_nm, Toast.LENGTH_LONG).show()
+                isEnabled = false
+            }
+        }
     }
 
     private fun openExternal(uri: Uri, mime: String) {

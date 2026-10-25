@@ -66,7 +66,7 @@
     <string name="bg_started_audio">🎵 جارٍ تنزيل الصوت في الخلفية…</string>
     <string name="bubble_failed">تعذّر العثور على زر المشاركة هنا. افتح الريل بملء الشاشة وأعد المحاولة، أو استخدم مشاركة ← ReelSaver ⬇ فيديو.</string>
     <string name="bubble_service_label">أزرار ReelSaver العائمة</string>
-    <string name="bubble_service_desc">يعرض زرّين عائمين (⬇ فيديو، 🎵 صوت) فوق تيك توك وإنستغرام وفيسبوك ويوتيوب. عند الضغط يفتح ReelSaver قائمة المشاركة في التطبيق، ويضغط «نسخ الرابط»، ثم ينزّل في الخلفية. لا يتصرف إلا عند ضغطك على زر، ولا يقرأ أي شيء آخر.</string>
+    <string name="bubble_service_desc">يعرض ثلاثة أزرار عائمة (⬇ فيديو، 🎵 صوت، 🔇 فيديو بدون موسيقى) فوق تيك توك وإنستغرام وفيسبوك ويوتيوب. عند الضغط يفتح ReelSaver قائمة المشاركة في التطبيق، ويضغط «نسخ الرابط»، ثم ينزّل في الخلفية. لا يتصرف إلا عند ضغطك على زر، ولا يقرأ أي شيء آخر.</string>
     <string name="bubble_section">الأزرار العائمة</string>
     <string name="bubble_show">إظهار فوق تطبيقات التواصل</string>
     <string name="bubble_status_on">✅ مفعّلة. اسحب الأزرار لتغيير مكانها.</string>
@@ -87,4 +87,24 @@
     <string name="tip">نصيحة: في تيك توك أو إنستغرام أو فيسبوك أو يوتيوب اضغط «مشاركة» ثم ReelSaver.</string>
     <string name="about_version">ReelSaver %1$s</string>
     <string name="status_title">الحالة</string>
+
+    <!-- حذف الموسيقى (ذكاء اصطناعي على الهاتف) -->
+    <string name="mode_no_music">بدون موسيقى</string>
+    <string name="download_no_music">تحميل بدون موسيقى</string>
+    <string name="remove_music">🔇 حذف الموسيقى</string>
+    <string name="quick_no_music">ReelSaver 🔇 بدون موسيقى</string>
+    <string name="nm_suffix">بدون موسيقى</string>
+    <string name="nm_reading">جارٍ قراءة الصوت…</string>
+    <string name="nm_no_audio">لا يوجد صوت في هذا الملف</string>
+    <string name="nm_not_media">شارك فيديو أو ملفًا صوتيًا</string>
+    <string name="nm_saving">جارٍ حفظ النسخة بدون موسيقى…</string>
+    <string name="nm_loading_model">جارٍ تشغيل الذكاء الاصطناعي…</string>
+    <string name="nm_model_download">جارٍ تنزيل نموذج الذكاء الاصطناعي (67 ميغابايت، مرة واحدة فقط)…</string>
+    <string name="nm_model_progress">تنزيل نموذج الذكاء الاصطناعي (مرة واحدة فقط)… %1$d%%</string>
+    <string name="nm_model_failed">تعذّر تنزيل نموذج الذكاء الاصطناعي. تحقق من الإنترنت وأعد المحاولة.</string>
+    <string name="nm_progress">🔇 جارٍ حذف الموسيقى… %1$d%%</string>
+    <string name="bg_nm_title">حذف الموسيقى</string>
+    <string name="bg_nm_dl_title">فيديو بدون موسيقى (%1$s)</string>
+    <string name="bg_done_nm">✅ جاهز بدون موسيقى</string>
+    <string name="bg_started_nm">🔇 جارٍ حذف الموسيقى في الخلفية…</string>
 </resources>

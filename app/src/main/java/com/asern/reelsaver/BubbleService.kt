@@ -24,7 +24,7 @@ import kotlin.math.abs
 
 /**
  * Floating buttons over TikTok / Instagram / Facebook / YouTube.
- * Tap ⬇ (video) or 🎵 (audio): opens the app's Share menu, taps "Copy link",
+ * Tap ⬇ (video), 🎵 (audio) or 🔇 (video without music): opens the app's Share menu, taps "Copy link",
  * then downloads in the background — ReelSaver never opens.
  */
 class BubbleService : AccessibilityService() {
@@ -120,6 +120,8 @@ class BubbleService : AccessibilityService() {
         }
         val audioBtn = roundButton(R.drawable.ic_audio, 0xCC7B3FE4.toInt())
         val videoBtn = roundButton(R.drawable.ic_download, 0xCC1E8E5A.toInt())
+        val noMusicBtn = roundButton(R.drawable.ic_no_music, 0xCCD9534F.toInt())
+        box.addView(noMusicBtn)
         box.addView(audioBtn)
         box.addView(videoBtn)
 
@@ -134,6 +136,7 @@ class BubbleService : AccessibilityService() {
             // Default: right side, just above the like button
             y = prefs.getInt("y", (resources.displayMetrics.heightPixels * 0.27).toInt())
         }
+        attachDrag(noMusicBtn, p) { onTap(audio = false, noMusic = true) }
         attachDrag(audioBtn, p) { onTap(audio = true) }
         attachDrag(videoBtn, p) { onTap(audio = false) }
         try {
@@ -178,7 +181,7 @@ class BubbleService : AccessibilityService() {
 
     // ---------- Share → Copy link automation ----------
 
-    private fun onTap(audio: Boolean) {
+    private fun onTap(audio: Boolean, noMusic: Boolean = false) {
         if (busy) return
         busy = true
         bubble?.alpha = 0.35f
@@ -195,6 +198,7 @@ class BubbleService : AccessibilityService() {
                 startActivity(Intent(this, QuickDownloadActivity::class.java)
                     .putExtra(QuickDownloadActivity.EXTRA_FROM_CLIPBOARD, true)
                     .putExtra(QuickDownloadActivity.EXTRA_AUDIO, audio)
+                    .putExtra(QuickDownloadActivity.EXTRA_NO_MUSIC, noMusic)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION
                             or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS))
                 done()

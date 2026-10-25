@@ -117,5 +117,6 @@ fun Context.openDownload(item: DownloadItem) {
         putExtra("uri", item.uri)
         putExtra("title", item.title)
         putExtra("mime", item.mime)
+        putExtra("source", item.source.name)
     })
 }

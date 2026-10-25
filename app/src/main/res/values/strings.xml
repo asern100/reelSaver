@@ -70,7 +70,7 @@
     <string name="bg_started_audio">🎵 Downloading audio in the background…</string>
     <string name="bubble_failed">Couldn\'t find the Share button here. Open the reel full screen and try again, or use Share → ReelSaver ⬇ Video.</string>
     <string name="bubble_service_label">ReelSaver floating buttons</string>
-    <string name="bubble_service_desc">Shows two floating buttons (⬇ video, 🎵 audio) over TikTok, Instagram, Facebook and YouTube. When tapped, ReelSaver opens the app\'s Share menu, taps \"Copy link\" and downloads in the background. It only acts when you tap a button and reads nothing else.</string>
+    <string name="bubble_service_desc">Shows three floating buttons (⬇ video, 🎵 audio, 🔇 video without music) over TikTok, Instagram, Facebook and YouTube. When tapped, ReelSaver opens the app\'s Share menu, taps \"Copy link\" and downloads in the background. It only acts when you tap a button and reads nothing else.</string>
     <string name="bubble_section">Floating buttons</string>
     <string name="bubble_show">Show over social apps</string>
     <string name="bubble_status_on">✅ Enabled. Drag the buttons to move them.</string>
@@ -91,4 +91,24 @@
     <string name="tip">Tip: in TikTok, Instagram, Facebook or YouTube tap Share, then ReelSaver.</string>
     <string name="about_version">ReelSaver %1$s</string>
     <string name="status_title">Status</string>
+
+    <!-- Remove music (AI, on the phone) -->
+    <string name="mode_no_music">No music</string>
+    <string name="download_no_music">Download without music</string>
+    <string name="remove_music">🔇 Remove music</string>
+    <string name="quick_no_music">ReelSaver 🔇 No music</string>
+    <string name="nm_suffix">no music</string>
+    <string name="nm_reading">Reading the sound…</string>
+    <string name="nm_no_audio">This file has no sound</string>
+    <string name="nm_not_media">Share a video or an audio file</string>
+    <string name="nm_saving">Saving the copy without music…</string>
+    <string name="nm_loading_model">Starting the AI…</string>
+    <string name="nm_model_download">Downloading the AI model (67 MB, only once)…</string>
+    <string name="nm_model_progress">Downloading the AI model (only once)… %1$d%%</string>
+    <string name="nm_model_failed">Couldn\'t download the AI model. Check your internet and try again.</string>
+    <string name="nm_progress">🔇 Removing the music… %1$d%%</string>
+    <string name="bg_nm_title">Removing the music</string>
+    <string name="bg_nm_dl_title">Video without music (%1$s)</string>
+    <string name="bg_done_nm">✅ Ready without music</string>
+    <string name="bg_started_nm">🔇 Removing the music in the background…</string>
 </resources>

@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.yausername.youtubedl_android.YoutubeDL
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -30,9 +32,11 @@ class MainActivity : AppCompatActivity() {
 
     private var lastItem: DownloadItem? = null
     private var busy = false
+    private var job: Job? = null
     private val processId = "reel-dl"
     private val prefs by lazy { getSharedPreferences("settings", MODE_PRIVATE) }
     private val audioMode get() = modeSeg.selected == 1
+    private val noMusicMode get() = modeSeg.selected == 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +50,12 @@ class MainActivity : AppCompatActivity() {
         statusCard = findViewById(R.id.statusCard)
         modeSeg = findViewById(R.id.modeSeg)
 
-        // Video / Audio — remembered, also used for links shared from other apps
-        modeSeg.setItems(listOf(getString(R.string.mode_video), getString(R.string.mode_audio)))
-        modeSeg.selected = if (prefs.getBoolean("audio_only", false)) 1 else 0
+        // Video / Audio / No music — remembered, also used for links shared from other apps
+        modeSeg.setItems(listOf(getString(R.string.mode_video), getString(R.string.mode_audio),
+            getString(R.string.mode_no_music)))
+        modeSeg.selected = prefs.getInt("mode", if (prefs.getBoolean("audio_only", false)) 1 else 0)
         modeSeg.onChange = { i ->
-            prefs.edit().putBoolean("audio_only", i == 1).apply()
+            prefs.edit().putInt("mode", i).putBoolean("audio_only", i == 1).apply()
             refreshButton()
         }
         refreshButton()
@@ -62,7 +67,8 @@ class MainActivity : AppCompatActivity() {
                 ?: setStatus(getString(R.string.no_link_clipboard))
         }
         downloadBtn.setOnClickListener {
-            if (busy) Downloader.cancel(processId) else startDownload(urlInput.text.toString().trim())
+            if (busy) { Downloader.cancel(processId); job?.cancel() }
+            else startDownload(urlInput.text.toString().trim())
         }
         urlInput.setOnEditorActionListener { _, action, _ ->
             if (action == EditorInfo.IME_ACTION_GO) { downloadBtn.performClick(); true } else false
@@ -110,11 +116,13 @@ class MainActivity : AppCompatActivity() {
     private fun refreshButton() {
         downloadBtn.text = getString(when {
             busy -> R.string.cancel
+            noMusicMode -> R.string.download_no_music
             audioMode -> R.string.download_audio
             else -> R.string.download
         })
         downloadBtn.setIconResource(when {
             busy -> R.drawable.ic_close
+            noMusicMode -> R.drawable.ic_no_music
             audioMode -> R.drawable.ic_audio
             else -> R.drawable.ic_download
         })
@@ -132,9 +140,10 @@ class MainActivity : AppCompatActivity() {
         setStatus(getString(R.string.preparing))
 
         val audio = audioMode
-        lifecycleScope.launch {
+        val noMusic = noMusicMode
+        job = lifecycleScope.launch {
             try {
-                val saved = Downloader.download(this@MainActivity, url, audio, processId) { ev ->
+                val saved = Downloader.download(this@MainActivity, url, audio, processId, noMusic) { ev ->
                     runOnUiThread {
                         when (ev) {
                             is Downloader.Event.Status -> {
@@ -144,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                             is Downloader.Event.Progress -> {
                                 progress.isIndeterminate = false
                                 progress.progress = ev.percent
-                                setStatus(getString(R.string.progress_fmt, ev.percent, ev.etaSec.toInt()))
+                                setStatus(ev.label ?: getString(R.string.progress_fmt, ev.percent, ev.etaSec.toInt()))
                             }
                         }
                     }
@@ -156,6 +165,8 @@ class MainActivity : AppCompatActivity() {
                 playBtn.text = getString(if (first.isAudio) R.string.listen else R.string.watch)
                 playBtn.visibility = View.VISIBLE
             } catch (e: YoutubeDL.CanceledException) {
+                setStatus(getString(R.string.canceled))
+            } catch (e: CancellationException) {
                 setStatus(getString(R.string.canceled))
             } catch (e: Exception) {
                 setStatus(getString(R.string.failed, e.message?.take(400).orEmpty()))
