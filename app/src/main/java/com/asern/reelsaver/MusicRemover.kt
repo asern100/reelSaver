@@ -90,6 +90,9 @@ object MusicRemover {
         val opts = OrtSession.SessionOptions().apply {
             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
             setIntraOpNumThreads(Runtime.getRuntime().availableProcessors().coerceIn(1, 4))
+            // Give memory back after each chunk instead of keeping a growing pool (phones kill big apps)
+            setCPUArenaAllocator(false)
+            setMemoryPatternOptimization(false)
         }
         onEvent(Downloader.Event.Status(c.getString(R.string.nm_loading_model)))
         val session = env.createSession(modelFile(c).absolutePath, opts)
@@ -119,7 +122,7 @@ object MusicRemover {
                         val done = k + 1
                         val eta = (System.currentTimeMillis() - start) / done * (chunks - done) / 1000
                         val pct = done * 100 / chunks
-                        Log.i("ReelSaver", "music removal chunk $done/$chunks")
+                        Log.i("ReelSaver", "music removal chunk $done/$chunks, memory ${rssMb()} MB")
                         onEvent(Downloader.Event.Progress(pct, eta, c.getString(R.string.nm_progress, pct)))
                     }
                 } finally {
@@ -176,6 +179,11 @@ object MusicRemover {
         if (part.length() != MODEL_SIZE) { part.delete(); throw Exception(c.getString(R.string.nm_model_failed)) }
         part.renameTo(f)
     }
+
+    private fun rssMb(): Long = try {
+        File("/proc/self/status").readLines().first { it.startsWith("VmRSS") }
+            .filter { it.isDigit() }.toLong() / 1024
+    } catch (_: Exception) { -1 }
 
     /** Runs the ffmpeg bundled with the download engine */
     private fun ffmpeg(c: Context, vararg args: String) {

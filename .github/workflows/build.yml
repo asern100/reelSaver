@@ -50,6 +50,7 @@ jobs:
           arch: x86_64
           target: google_apis
           emulator-boot-timeout: 900
+          ram-size: 4096M
           script: ./ci/smoke.sh && ./ci/music_test.sh
       - name: Publish screenshots
         if: always()
