@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.widget.Toast
 
 /**
@@ -31,6 +32,7 @@ class QuickDownloadActivity : Activity() {
             val cls = intent.component?.className.orEmpty()
             val noMusic = cls.endsWith("QuickNoMusic")
             val stream = streamOf(intent)
+            Log.i("ReelSaver", "share to $cls type=${intent.type} stream=$stream")
             if (noMusic && stream != null) removeFromFile(stream)
             else go(Downloader.extractUrl(intent.getStringExtra(Intent.EXTRA_TEXT)), cls.endsWith("QuickAudio"), noMusic)
         }
