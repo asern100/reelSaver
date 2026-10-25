@@ -5,6 +5,7 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -116,6 +117,7 @@ object MusicRemover {
                         val done = k + 1
                         val eta = (System.currentTimeMillis() - start) / done * (chunks - done) / 1000
                         val pct = done * 100 / chunks
+                        Log.i("ReelSaver", "music removal chunk $done/$chunks")
                         onEvent(Downloader.Event.Progress(pct, eta, c.getString(R.string.nm_progress, pct)))
                     }
                 } finally {
@@ -180,6 +182,7 @@ object MusicRemover {
         pb.environment()["LD_LIBRARY_PATH"] = "$pkgs/python/usr/lib:$pkgs/ffmpeg/usr/lib"
         val p = pb.start()
         val log = p.inputStream.bufferedReader().readText()
+        Log.i("ReelSaver", "ffmpeg ${args.take(3)} -> ${log.takeLast(200)}")
         if (p.waitFor() != 0) throw Exception("ffmpeg: " + log.trim().takeLast(300))
     }
 

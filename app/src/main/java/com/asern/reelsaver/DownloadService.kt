@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import kotlinx.coroutines.CoroutineScope
@@ -96,6 +97,7 @@ class DownloadService : Service() {
     }
 
     private suspend fun process(job: Job) {
+        Log.i("ReelSaver", "job start $job")
         val title = when {
             job.url == null -> getString(R.string.bg_nm_title)
             job.noMusic -> getString(R.string.bg_nm_dl_title, Source.fromUrl(job.url).label(this))
@@ -118,6 +120,7 @@ class DownloadService : Service() {
             }
             doneNotif(saved.first(), job.noMusic)
         } catch (e: Exception) {
+            Log.e("ReelSaver", "job failed", e)
             nm.notify(nextId.getAndIncrement(), NotificationCompat.Builder(this, CH_DONE)
                 .setSmallIcon(android.R.drawable.stat_notify_error)
                 .setContentTitle(getString(R.string.bg_failed))

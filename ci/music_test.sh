@@ -8,13 +8,14 @@ adb shell "run-as $PKG sh -c 'mkdir -p cache/ci && cp /data/local/tmp/nm_test.mp
 adb logcat -c
 adb shell cmd uimode night no
 START=$(date +%s)
-adb shell am start -a android.intent.action.SEND -t video/mp4 \
+adb shell "run-as $PKG ls -la cache/ci" | sed 's/^/cache: /'
+adb shell am start -W -a android.intent.action.SEND -t video/mp4 \
   --eu android.intent.extra.STREAM "file:///data/user/0/$PKG/cache/ci/nm_test.mp4" \
   -n $PKG/com.asern.reelsaver.QuickNoMusic
 sleep 20; adb shell cmd statusbar expand-notifications; sleep 3
 adb exec-out screencap -p > shots/nm_progress.png; adb shell cmd statusbar collapse
 ok=0
-for i in $(seq 1 120); do
+for i in $(seq 1 60); do
   if adb shell "run-as $PKG cat files/history.json" 2>/dev/null | grep -q "no music"; then ok=1; break; fi
   sleep 10
 done
@@ -26,7 +27,8 @@ if [ -s nm_crash.txt ]; then
   echo "::error title=music removal crash::$(grep -vE '^\s*$' nm_crash.txt | head -40 | tr '\n' '|' | cut -c1-3500)"; exit 1
 fi
 if [ $ok != 1 ]; then
-  adb logcat -d | grep -iE "reelsaver|onnx|ffmpeg|AndroidRuntime" | tail -40 > nm_log.txt
+  adb logcat -d | grep -E "ReelSaver|onnxruntime|AndroidRuntime|QuickNoMusic|DownloadService|ForegroundService" | tail -40 > nm_log.txt
+  cat nm_log.txt
   echo "::error title=music removal did not finish::after ${SECS}s | $(tr '\n' '|' < nm_log.txt | cut -c1-3000)"; exit 1
 fi
 OUT=$(adb shell "ls /sdcard/Download/ReelSaver/" | tr -d '\r' | grep "no music" | head -1)
