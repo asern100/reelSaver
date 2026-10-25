@@ -48,7 +48,9 @@ object MusicRemover {
         onEvent: (Downloader.Event) -> Unit,
     ) = lock.withLock {
         withContext(Dispatchers.IO) {
+            Log.i("ReelSaver", "music removal: waiting for engine")
             App.ready.await()
+            Log.i("ReelSaver", "music removal: model ready=${isModelReady(c)}")
             ensureModel(c, onEvent)
             val work = File(c.cacheDir, "nomusic").apply { deleteRecursively(); mkdirs() }
             try {
@@ -142,6 +144,7 @@ object MusicRemover {
             conn.connectTimeout = 20_000; conn.readTimeout = 30_000
             conn.instanceFollowRedirects = false
             val code = conn.responseCode
+            Log.i("ReelSaver", "model download: HTTP $code from ${url.host}")
             if (code in 300..399 && hops++ < 5) {
                 url = URL(url, conn.getHeaderField("Location")); conn.disconnect(); continue
             }
@@ -159,6 +162,7 @@ object MusicRemover {
                         val pct = (total * 100 / MODEL_SIZE).toInt()
                         if (pct != lastPct) {
                             lastPct = pct
+                            if (pct % 10 == 0) Log.i("ReelSaver", "model download $pct%")
                             onEvent(Downloader.Event.Progress(pct, -1, c.getString(R.string.nm_model_progress, pct)))
                         }
                     }

@@ -28,8 +28,14 @@ if [ -s nm_crash.txt ]; then
 fi
 if [ $ok != 1 ]; then
   adb logcat -d | grep -E "ReelSaver|onnxruntime|AndroidRuntime|QuickNoMusic|DownloadService|ForegroundService" | tail -40 > nm_log.txt
-  cat nm_log.txt
-  echo "::error title=music removal did not finish::after ${SECS}s | $(tr '\n' '|' < nm_log.txt | cut -c1-3000)"; exit 1
+  { adb shell "run-as $PKG ls -la files/models" 2>&1
+    adb shell dumpsys notification --noredact | grep -iE "reelsaver|pkg=com.asern" | head -8
+    adb shell dumpsys package com.asern.reelsaver.app | grep -iE "POST_NOTIFICATIONS" | head -3
+    adb shell "ping -c 2 -W 3 github.com" 2>&1 | tail -2
+  } > nm_extra.txt
+  grep " ReelSaver" nm_log.txt > nm_app.txt
+  cat nm_log.txt nm_extra.txt
+  echo "::error title=music removal did not finish::after ${SECS}s | $(cat nm_app.txt nm_extra.txt | tr '\n' '|' | cut -c1-3400)"; exit 1
 fi
 OUT=$(adb shell "ls /sdcard/Download/ReelSaver/" | tr -d '\r' | grep "no music" | head -1)
 adb pull "/sdcard/Download/ReelSaver/$OUT" $T/result.mp4 > /dev/null
